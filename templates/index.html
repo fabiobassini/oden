@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+
+<!--
+  =============================================================================
+  ODE Solver Application - Dark Theme
+  -----------------------------------------------------------------------------
+  @autor: Fabio Bassini
+  @data: 2024-11-03
+  @versione: 1.0.0
+  @licenza: MIT License with Commons Clause
+  @copyright: © 2024 Fabio Bassini
+  =============================================================================
+  Descrizione:
+  Questo file HTML implementa un solver per Equazioni Differenziali Ordinarie (ODE)
+  con un'interfaccia utente in tema scuro. Utilizza Bootstrap Darkly e Plotly.js
+  per la visualizzazione dei grafici.
+  
+  =============================================================================
+  
+  MIT License
+
+  Copyright (c) 2024 Fabio Bassini
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+  =============================================================================
+  
+  Commons Clause License Condition v1.0
+
+  The Software is provided to you by the Licensor under the License, as defined
+  below, subject to the following condition.
+
+  Without limiting other conditions in the License, the grant of rights under the
+  License will not include, and the License Condition below prohibits, the right
+  to Sell the Software.
+
+  "Sell" means providing to third parties, for a fee or other consideration,
+  access to the Software as a service, hosting the Software for third parties,
+  or otherwise conveying the Software to third parties for a fee or other
+  consideration.
+
+  For purposes of the foregoing, “the License” shall mean the MIT License.
+  
+  =============================================================================
+-->
+
+
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODE Solver</title>
+    <!-- Bootstrap 5 Dark Theme from Bootswatch -->
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/darkly/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Aggiunta della libreria Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Configurazione di base per il corpo della pagina */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #2b2b2b;
+            /* Sfondo scuro */
+            color: #f8f9fa;
+            /* Testo chiaro */
+            font-size: 0.85rem;
+        }
+
+        /* Sidebar Offcanvas */
+        .offcanvas-body {
+            padding: 15px;
+            background-color: #343a40;
+            /* Sfondo scuro per la sidebar */
+            color: #f8f9fa;
+            /* Testo chiaro */
+        }
+
+        /* Riduzione Margini e Padding */
+        .form-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-2,
+        .mt-2,
+        .mt-3 {
+            margin-bottom: 0.5rem !important;
+            margin-top: 0.5rem !important;
+        }
+
+        /* Bottoni Compatti */
+        .btn-custom {
+            background-color: #1a73e8;
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-custom:hover {
+            background-color: #1669c1;
+            color: white;
+        }
+
+        /* Grafici Compatti */
+        .plot-container {
+            margin-top: 10px;
+            flex: 1;
+            /* Permette al container dei grafici di espandersi */
+        }
+
+        .plot {
+            width: 100%;
+            height: 450px;
+            /* Altezza aumentata */
+            background-color: #2b2b2b;
+            /* Sfondo scuro per il grafico */
+        }
+
+        @media (max-width: 768px) {
+            .plot {
+                height: 350px;
+                /* Altezza ridotta per dispositivi mobili */
+            }
+        }
+
+        @media (max-width: 576px) {
+            .plot {
+                height: 300px;
+                /* Altezza ulteriormente ridotta per schermi piccoli */
+            }
+        }
+
+        /* Titoli Compatti */
+        h5 {
+            font-size: 1.25rem;
+            color: #f8f9fa;
+        }
+
+        h6 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #f8f9fa;
+        }
+
+        /* Icone Informative */
+        .info-icon {
+            margin-top: 5px;
+            margin-left: 5px;
+            color: #1a73e8;
+            cursor: pointer;
+        }
+
+        .nav-tabs .nav-link {
+            font-size: 0.85rem;
+            padding: 6px 10px;
+            color: #f8f9fa;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: #1a73e8;
+            color: white;
+        }
+
+        /* Tooltip z-index */
+        .tooltip {
+            z-index: 2000;
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: #1a1a1a;
+            padding: 10px 0;
+        }
+
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        footer .text-muted {
+            margin: 0.5rem 0;
+            color: #adb5bd !important;
+            /* Colore del testo nel footer */
+        }
+
+        /* Modalità scura per input e form */
+        .form-control,
+        .form-select {
+            background-color: #3c3c3c;
+            color: #f8f9fa;
+            border: 1px solid #555555;
+        }
+
+        .form-control::placeholder {
+            color: #cccccc;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #4c4c4c;
+            color: #f8f9fa;
+            border-color: #1a73e8;
+            box-shadow: none;
+        }
+
+        /* Navbar branding color */
+        .navbar-brand {
+            color: #f8f9fa;
+        }
+
+        /* Link styling */
+        a {
+            color: #1a73e8;
+        }
+
+        a:hover {
+            color: #1669c1;
+            text-decoration: underline;
+        }
+
+        /* Adattamento delle tooltip per il tema scuro */
+        .tooltip-inner {
+            background-color: #343a40;
+            color: #f8f9fa;
+            border: 1px solid #555555;
+        }
+
+        .arrow::before {
+            border-top-color: #343a40;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar con Pulsante per la Sidebar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <button class="btn btn-custom" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
+                aria-controls="sidebar">
+                ☰ Configura ODE
+            </button>
+            <span class="navbar-brand mb-0 h1">ODEN</span>
+        </div>
+    </nav>
+
+    <!-- Sidebar Offcanvas -->
+    <div class="offcanvas offcanvas-start bg-dark text-light" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarLabel">Parametri ODE</h5>
+            <button type="button" class="btn-close btn-close-white text-reset" data-bs-dismiss="offcanvas"
+                aria-label="Chiudi"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form>
+                <!-- Selezione tipo di ODE -->
+                <div class="mb-2">
+                    <label for="odeType" class="form-label">Tipo di ODE:</label>
+                    <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Seleziona se vuoi risolvere un'ODE scalare o un sistema di ODE."></i>
+                    <select id="odeType" class="form-select form-select-sm mt-1" onchange="toggleInputSections()">
+                        <option value="scalar" selected>Scalare</option>
+                        <option value="system">Sistema</option>
+                    </select>
+                </div>
+
+                <!-- Parametri comuni -->
+                <div class="mb-2">
+                    <label for="time" class="form-label">Tempo (t):</label>
+                    <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Inserisci il tempo massimo per la simulazione dell'ODE."></i>
+                    <input type="number" class="form-control form-control-sm mt-1" id="time" placeholder="Tempo massimo"
+                        required>
+                </div>
+
+                <div class="mb-2">
+                    <label for="steps" class="form-label">Passi:</label>
+                    <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Numero di passi temporali per la risoluzione dell'ODE."></i>
+                    <input type="number" class="form-control form-control-sm mt-1" id="steps"
+                        placeholder="Numero di passi" required>
+                </div>
+
+                <!-- Parametri per ODE scalare -->
+                <div id="scalarSection" class="mt-3">
+                    <h6>ODE Scalare</h6>
+                    <div class="form-group">
+                        <label for="x0" class="form-label">Condizione Iniziale (x₀):</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Condizione iniziale per l'ODE scalare. Ad esempio: 1.5"></i>
+                        <input type="number" class="form-control form-control-sm mt-1" id="x0" placeholder="x₀"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="a" class="form-label">Parametro a:</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Parametro a dell'ODE scalare."></i>
+                        <input type="number" class="form-control form-control-sm mt-1" id="a" placeholder="a" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="b_func" class="form-label">Funzione b(t):</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Funzione dipendente dal tempo b(t). Ad esempio: np.sin(t)"></i>
+                        <input type="text" class="form-control form-control-sm mt-1" id="b_func"
+                            placeholder="Es. np.sin(t)">
+                    </div>
+                    <div class="form-group">
+                        <label for="f_func" class="form-label">Funzione f(x, t):</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Funzione f(x, t) dell'ODE scalare. Ad esempio: np.sin(x) + t"></i>
+                        <input type="text" class="form-control form-control-sm mt-1" id="f_func"
+                            placeholder="Es. np.sin(x) + t">
+                    </div>
+                </div>
+
+                <!-- Parametri per sistema di ODE -->
+                <div id="systemSection" class="mt-3" style="display: none;">
+                    <h6>Sistema di ODE</h6>
+                    <div class="form-group">
+                        <label for="X0" class="form-label">Condizione Iniziale (X₀):</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Condizione iniziale per il sistema di ODE. Ad esempio: 1 0"></i>
+                        <input type="text" class="form-control form-control-sm mt-1" id="X0" placeholder="Es. 1 0">
+                    </div>
+                    <div class="form-group">
+                        <label for="A" class="form-label">Matrice A:</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Matrice quadrata che rappresenta i coefficienti del sistema di ODE. Ad esempio: 1 2 3 4 per una matrice 2x2"></i>
+                        <input type="text" class="form-control form-control-sm mt-1" id="A" placeholder="Es. 1 0 0 1">
+                    </div>
+                    <div class="form-group">
+                        <label for="B_func" class="form-label">Funzione B(t):</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Funzione vettoriale dipendente dal tempo B(t). Ad esempio: [0, np.sin(t)]"></i>
+                        <input type="text" class="form-control form-control-sm mt-1" id="B_func"
+                            placeholder="Es. [0, np.sin(t)]">
+                    </div>
+                    <div class="form-group">
+                        <label for="F_func" class="form-label">Funzione F(X, t):</label>
+                        <i class="bi bi-question-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="right"
+                            title="Funzione vettoriale che rappresenta il sistema di ODE. Ad esempio: [X[1], -0.1*X[1] - X[0]]"></i>
+                        <input type="text" class="form-control form-control-sm mt-1" id="F_func"
+                            placeholder="Es. [X[1], -0.1*X[1] - X[0]]">
+                    </div>
+                </div>
+
+                <div class="d-grid mt-3">
+                    <button type="button" class="btn btn-custom btn-sm" onclick="solveODE()">Risolvi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Container Principale per i Grafici -->
+    <div class="container plot-container">
+        <!-- Schede per la Visualizzazione dei Grafici -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="solution-tab" data-bs-toggle="tab" data-bs-target="#solution"
+                    type="button" role="tab" aria-controls="solution" aria-selected="true">Soluzione</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="vector-field-tab" data-bs-toggle="tab" data-bs-target="#vector-field"
+                    type="button" role="tab" aria-controls="vector-field" aria-selected="false">Campo
+                    Vettoriale</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="vector-field-3d-tab" data-bs-toggle="tab" data-bs-target="#vector-field-3d"
+                    type="button" role="tab" aria-controls="vector-field-3d" aria-selected="false">Campo Vettoriale
+                    3D</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <!-- Tab Soluzione -->
+            <div class="tab-pane fade show active" id="solution" role="tabpanel" aria-labelledby="solution-tab">
+                <div id="plot" class="plot"></div>
+            </div>
+            <!-- Tab Campo Vettoriale 2D -->
+            <div class="tab-pane fade" id="vector-field" role="tabpanel" aria-labelledby="vector-field-tab">
+                <div id="vectorFieldPlot" class="plot"></div>
+            </div>
+            <!-- Tab Campo Vettoriale 3D -->
+            <div class="tab-pane fade" id="vector-field-3d" role="tabpanel" aria-labelledby="vector-field-3d-tab">
+                <div id="vectorField3DPlot" class="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <span class="text-muted">Ultimo aggiornamento: <span id="lastUpdate"></span></span>
+            <span class="text-muted">Autore: Fabio Bassini</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle con Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            toggleInputSections();
+
+            // Inizializza tutti i tooltip
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // Imposta la data di ultimo aggiornamento
+            const today = new Date();
+            const formattedDate = today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0');
+            document.getElementById('lastUpdate').textContent = formattedDate;
+        });
+
+        function toggleInputSections() {
+            const odeType = document.getElementById("odeType").value;
+            const scalarSection = document.getElementById("scalarSection");
+            const systemSection = document.getElementById("systemSection");
+
+            if (odeType === "scalar") {
+                scalarSection.style.display = "block";
+                systemSection.style.display = "none";
+            } else if (odeType === "system") {
+                scalarSection.style.display = "none";
+                systemSection.style.display = "block";
+            }
+        }
+
+        async function solveODE() {
+            const odeType = document.getElementById("odeType").value;
+            const time = parseFloat(document.getElementById("time").value);
+            const steps = parseInt(document.getElementById("steps").value);
+
+            const x0 = document.getElementById("x0").value;
+            const a = document.getElementById("a").value;
+            const b_func = document.getElementById("b_func").value;
+            const f_func = document.getElementById("f_func").value;
+
+            const X0 = document.getElementById("X0").value;
+            const A = document.getElementById("A").value;
+            const B_func = document.getElementById("B_func").value;
+            const F_func = document.getElementById("F_func").value;
+
+            const data = {
+                type: odeType,
+                time,
+                steps,
+                x0,
+                a,
+                b_func,
+                f_func,
+                X0,
+                A,
+                B_func,
+                F_func
+            };
+
+            console.log("Dati inviati al server:", data);
+
+            try {
+                const response = await fetch("/solve", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    console.log("Soluzione:", result.solution);
+
+                    // Chiamata alla funzione per creare i grafici
+                    plotSolution(result, data);
+                } else {
+                    alert(result.message || "Errore durante la risoluzione dell'ODE.");
+                }
+            } catch (error) {
+                console.error("Errore durante la richiesta Fetch:", error);
+                alert("Errore durante la risoluzione dell'ODE.");
+            }
+        }
+
+        function plotSolution(result, data) {
+            const odeType = data.type;
+            const t_vals = result.t_vals;
+            const solution = result.solution;
+
+            if (odeType === "scalar") {
+                // Grafico per ODE scalare
+                const trace = {
+                    x: t_vals,
+                    y: solution,
+                    mode: 'lines',
+                    name: 'x(t)',
+                    line: { color: '#1a73e8' }
+                };
+
+                const layout = {
+                    title: 'Soluzione ODE Scalare',
+                    xaxis: { title: 'Tempo t', gridcolor: '#444' },
+                    yaxis: { title: 'x(t)', gridcolor: '#444' },
+                    plot_bgcolor: '#2b2b2b',
+                    paper_bgcolor: '#2b2b2b',
+                    font: { color: '#f8f9fa' },
+                    autosize: true,
+                    margin: { t: 30, r: 20, b: 30, l: 40 }
+                };
+
+                Plotly.newPlot('plot', [trace], layout, { responsive: true });
+
+                // Nascondi i grafici vettoriali se presenti
+                document.getElementById('vectorFieldPlot').style.display = 'none';
+                document.getElementById('vectorField3DPlot').style.display = 'none';
+            } else if (odeType === "system") {
+                const num_vars = solution[0].length;
+                const traces = [];
+
+                for (let i = 0; i < num_vars; i++) {
+                    const y_vals = solution.map(point => point[i]);
+
+                    traces.push({
+                        x: t_vals,
+                        y: y_vals,
+                        mode: 'lines',
+                        name: `x${i + 1}(t)`,
+                        line: { width: 2, color: getColor(i) }
+                    });
+                }
+
+                const layout = {
+                    title: 'Soluzione Sistema di ODE',
+                    xaxis: { title: 'Tempo t', gridcolor: '#444' },
+                    yaxis: { title: 'Valore delle variabili', gridcolor: '#444' },
+                    plot_bgcolor: '#2b2b2b',
+                    paper_bgcolor: '#2b2b2b',
+                    font: { color: '#f8f9fa' },
+                    autosize: true,
+                    margin: { t: 30, r: 20, b: 30, l: 40 }
+                };
+
+                Plotly.newPlot('plot', traces, layout, { responsive: true });
+
+                // Gestione del campo vettoriale 2D o 3D
+                if (num_vars === 2 && result.vector_field) {
+                    // Campo vettoriale 2D
+                    plotVectorField(result.vector_field, solution);
+                    // Attiva la scheda "Campo Vettoriale"
+                    var triggerEl = document.querySelector('#vector-field-tab');
+                    var tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                } else if (num_vars === 3 && result.vector_field_3d && result.flow_lines_3d) {
+                    // Campo vettoriale 3D
+                    plotVectorField3D(result.vector_field_3d, solution, result.flow_lines_3d);
+                    // Attiva la scheda "Campo Vettoriale 3D"
+                    var triggerEl = document.querySelector('#vector-field-3d-tab');
+                    var tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                } else {
+                    // Nascondi i grafici vettoriali se non applicabile
+                    document.getElementById('vectorFieldPlot').style.display = 'none';
+                    document.getElementById('vectorField3DPlot').style.display = 'none';
+                }
+            }
+        }
+
+        function getColor(index) {
+            // Funzione per assegnare colori differenti alle variabili
+            const colors = ['#1a73e8', '#34a853', '#ea4335', '#fbbc05'];
+            return colors[index % colors.length];
+        }
+
+        function plotVectorField(vectorField, solution) {
+            const X = vectorField.X;
+            const Y = vectorField.Y;
+            const U = vectorField.U;
+            const V = vectorField.V;
+
+            // Traccia il campo vettoriale (frecce)
+            const quiver = {
+                type: 'scattergl',
+                mode: 'markers',
+                x: X.flat(),
+                y: Y.flat(),
+                marker: {
+                    size: 0.1,
+                    color: 'rgba(0,0,0,0)'
+                },
+                hoverinfo: 'none'
+            };
+
+            const quiverLines = {
+                type: 'scattergl',
+                mode: 'lines',
+                // Aumentato il fattore di scala da 0.05 a 0.1
+                x: [].concat(...X.map((xi, i) => X[i].map((xj, j) => [xj, xj + U[i][j] * 0.1, null])).flat()),
+                y: [].concat(...Y.map((yi, i) => Y[i].map((yj, j) => [yj, yj + V[i][j] * 0.1, null])).flat()),
+                line: {
+                    color: 'gray',
+                    width: 0.8
+                },
+                hoverinfo: 'none',
+                showlegend: false
+            };
+
+            // Traccia la traiettoria della soluzione
+            const x_vals = solution.map(point => point[0]);
+            const y_vals = solution.map(point => point[1]);
+
+            const traceTrajectory = {
+                x: x_vals,
+                y: y_vals,
+                mode: 'lines',
+                name: 'Traiettoria',
+                line: { color: '#1a73e8', width: 2 }
+            };
+
+            // Traccia i nullclini usando tracce di tipo 'contour'
+            const contour_U = {
+                x: X[0],
+                y: Y.map(row => row[0]),
+                z: U,
+                type: 'contour',
+                contours: {
+                    coloring: 'none',
+                    showlines: true,
+                    start: 0,
+                    end: 0,
+                    size: 1
+                },
+                line: {
+                    color: 'red',
+                    width: 1,
+                    dash: 'dash'
+                },
+                showscale: false,
+                hoverinfo: 'none',
+                name: 'Nullclino U=0'
+            };
+
+            const contour_V = {
+                x: X[0],
+                y: Y.map(row => row[0]),
+                z: V,
+                type: 'contour',
+                contours: {
+                    coloring: 'none',
+                    showlines: true,
+                    start: 0,
+                    end: 0,
+                    size: 1
+                },
+                line: {
+                    color: 'green',
+                    width: 1,
+                    dash: 'dash'
+                },
+                showscale: false,
+                hoverinfo: 'none',
+                name: 'Nullclino V=0'
+            };
+
+            // Layout del grafico
+            const layout = {
+                title: 'Campo Vettoriale e Traiettoria',
+                xaxis: { title: 'x₁', scaleanchor: "y", scaleratio: 1, gridcolor: '#444' },
+                yaxis: { title: 'x₂', gridcolor: '#444' },
+                plot_bgcolor: '#2b2b2b',
+                paper_bgcolor: '#2b2b2b',
+                font: { color: '#f8f9fa' },
+                autosize: true,
+                margin: { t: 30, r: 20, b: 30, l: 40 }
+            };
+
+            // Tracce totali
+            const data = [quiver, quiverLines, contour_U, contour_V, traceTrajectory];
+
+            Plotly.newPlot('vectorFieldPlot', data, layout, { responsive: true });
+
+            // Assicurati che il grafico del campo vettoriale sia visibile
+            document.getElementById('vectorFieldPlot').style.display = 'block';
+        }
+
+        function plotVectorField3D(vectorField3d, solution, flowLines) {
+            const X = vectorField3d.X;
+            const Y = vectorField3d.Y;
+            const Z = vectorField3d.Z;
+            const U = vectorField3d.U;
+            const V = vectorField3d.V;
+            const W = vectorField3d.W;
+
+            // Traccia le frecce del campo vettoriale
+            const quiver3D = {
+                type: 'cone',
+                x: X.flat(),
+                y: Y.flat(),
+                z: Z.flat(),
+                u: U.flat(),
+                v: V.flat(),
+                w: W.flat(),
+                sizemode: 'absolute',
+                sizeref: 0.5, // Regola la dimensione delle frecce
+                anchor: 'tail',
+                colorscale: 'Blues',
+                showscale: true,
+                name: 'Campo Vettoriale'
+            };
+
+            // Traccia la traiettoria della soluzione principale
+            const x_vals = solution.map(point => point[0]);
+            const y_vals = solution.map(point => point[1]);
+            const z_vals = solution.map(point => point[2]);
+
+            const traceTrajectory = {
+                x: x_vals,
+                y: y_vals,
+                z: z_vals,
+                mode: 'lines',
+                name: 'Traiettoria',
+                line: { color: 'blue', width: 4 }
+            };
+
+            // Traccia le linee di flusso
+            const flowLineTraces = flowLines.map((flowLine, index) => ({
+                x: flowLine.map(point => point[0]),
+                y: flowLine.map(point => point[1]),
+                z: flowLine.map(point => point[2]),
+                mode: 'lines',
+                name: `Flusso ${index + 1}`,
+                line: { color: 'orange', width: 2, dash: 'dash' }
+            }));
+
+            const layout = {
+                title: 'Campo Vettoriale 3D, Traiettoria e Linee di Flusso',
+                scene: {
+                    xaxis: { title: 'x₁', gridcolor: '#444', backgroundcolor: '#2b2b2b', color: '#f8f9fa' },
+                    yaxis: { title: 'x₂', gridcolor: '#444', backgroundcolor: '#2b2b2b', color: '#f8f9fa' },
+                    zaxis: { title: 'x₃', gridcolor: '#444', backgroundcolor: '#2b2b2b', color: '#f8f9fa' },
+                    aspectmode: 'data' // Mantiene le proporzioni corrette
+                },
+                plot_bgcolor: '#2b2b2b',
+                paper_bgcolor: '#2b2b2b',
+                font: { color: '#f8f9fa' },
+                showlegend: true,
+                autosize: true,
+                margin: { t: 30, r: 20, b: 30, l: 40 }
+            };
+
+            const dataPlot = [quiver3D, traceTrajectory, ...flowLineTraces];
+
+            Plotly.newPlot('vectorField3DPlot', dataPlot, layout, { responsive: true });
+
+            // Assicurati che il grafico del campo vettoriale 3D sia visibile
+            document.getElementById('vectorField3DPlot').style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
